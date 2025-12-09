@@ -1,3 +1,22 @@
+local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
+
+-- ตั้งค่า Auto-Reload
+if queueteleport then
+
+    
+	queueteleport([[
+        repeat task.wait(0.5) until not PlayerGui:FindFirstChild("LoadingScreen")
+        task.wait(1)
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/tawlavegas-jpg/wdwdwdwd/refs/heads/main/tththth"))()
+	]])
+	print("✅ Auto-reload enabled for rj.lua")
+else
+	warn("⚠️ queueteleport not supported - script will not auto-reload after rejoin")
+end
+
+
+
+
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 
@@ -59,7 +78,7 @@ autoRole = function()
         print("🔄 รอบที่ " .. round .. " (เหลือ " .. currentChances .. " Chances)")
         print("━━━━━━━━━━━━━━━━━━━━━━")
         
-        task.wait(0.1)
+        task.wait(0.001)
         
         if string.find(GuiFamily.Text, Role) then
             print("✅ สำเร็จ! ได้ " .. Role .. " แล้ว!")
@@ -71,7 +90,7 @@ autoRole = function()
             for i = 1, 100 do
                 if not _G.autoRole then break end
                 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer(unpack(bug))
-                wait(0.1)
+                wait(0.001)
             end
             
             task.wait(1)
