@@ -38,7 +38,7 @@ end
 
 
 
-local Role = "Kanroji"
+local Role = "Kamado"
 local player = game:GetService("Players").LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 
