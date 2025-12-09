@@ -1,0 +1,86 @@
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+local PlaceId = game.PlaceId
+local JobId = game.JobId
+
+-- ฟังก์ชัน Rejoin
+function rejoin()
+    if #Players:GetPlayers() <= 1 then
+        -- ถ้ามีผู้เล่น <= 1 คน (แค่ตัวเราเอง)
+        Players.LocalPlayer:Kick("\nRejoining...")
+        wait()
+        TeleportService:Teleport(PlaceId, Players.LocalPlayer)
+    else
+        -- ถ้ามีผู้เล่นมากกว่า 1 คน กลับเข้าเซิร์ฟเวอร์เดิม
+        TeleportService:TeleportToPlaceInstance(PlaceId, JobId, Players.LocalPlayer)
+    end
+end
+
+
+
+local Role = "Kanroji"
+local player = game:GetService("Players").LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
+
+-- รอให้ LoadingScreen หาย
+repeat task.wait(0.5) until not PlayerGui:FindFirstChild("LoadingScreen")
+
+local Interface = PlayerGui:WaitForChild("Interface")
+local Customization = Interface:WaitForChild("Customization")
+local GuiFamily = Customization:WaitForChild("Family")
+local SpinsText = GuiFamily:WaitForChild("Spins")
+
+local asy = {"Character","Customization","Eyes",workspace}
+local bug = {"Character","Customization","Eyes",workspace}
+
+_G.autoRole = true
+
+-- ฟังก์ชันดึงจำนวน Chances
+local function getChances()
+    local text = SpinsText.Text
+    local number = tonumber(string.match(text, "%d+"))
+    return number or 0
+end
+
+autoRole = function()
+    local round = 0
+    
+    while _G.autoRole do
+        local currentChances = getChances()  -- อ่านค่า Chances ทุกรอบ
+        
+        if currentChances <= 0 then
+            print("⚠️ หมด Chances แล้ว!")
+            break
+        end
+        
+        round = round + 1
+        print("━━━━━━━━━━━━━━━━━━━━━━")
+        print("🔄 รอบที่ " .. round .. " (เหลือ " .. currentChances .. " Chances)")
+        print("━━━━━━━━━━━━━━━━━━━━━━")
+        
+        task.wait(0.1)
+        
+        if string.find(GuiFamily.Text, Role) then
+            print("✅ สำเร็จ! ได้ " .. Role .. " แล้ว!")
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer(unpack(asy))
+            break
+        else
+            print("  ⚙️ กำลัง Reroll 100 ครั้ง...")
+            
+            for i = 1, 100 do
+                if not _G.autoRole then break end
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer(unpack(bug))
+                wait(0.1)
+            end
+            
+            task.wait(1)
+            print("  📋 ส่ง LastName request")
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer("Character","Customization","LastName")
+        end
+    end
+    rejoin()
+    print("🛑 หยุดทำงานแล้ว")
+end
+
+autoRole()
