@@ -60,18 +60,7 @@ local function getChances()
     return number or 0
 end
 
--- ฟังก์ชันส่ง Remote แบบปลอดภัย
-local function safeInvoke(...)
-    local success, result = pcall(function()
-        return ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer(...)
-    end)
-    
-    if not success then
-        warn("⚠️ Remote error:", result)
-    end
-    
-    return success
-end
+
 
 -- ฟังก์ชันหลัก
 autoRole = function()
@@ -100,7 +89,7 @@ autoRole = function()
             print("━━━━━━━━━━━━━━━━━━━━━━")
             print("✅ สำเร็จ! ได้ " .. Role .. " แล้ว!")
             print("━━━━━━━━━━━━━━━━━━━━━━")
-            safeInvoke(unpack(asy))
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer(unpack(asy))
             foundRole = true
             break
         else
@@ -110,7 +99,7 @@ autoRole = function()
             for i = 1, 50 do
                 if not _G.autoRole then break end
                 
-                safeInvoke(unpack(bug))
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer(unpack(bug))
                 
                 -- แสดงความคืบหน้าทุก 10 ครั้ง
                 if i % 10 == 0 then
@@ -122,7 +111,7 @@ autoRole = function()
             
             task.wait(1)
             print("  📋 ส่ง LastName request")
-            safeInvoke("Character", "Customization", "LastName")
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer("Character","Customization","LastName")
             
             task.wait(0.5)  -- รอให้ UI อัพเดท
         end
