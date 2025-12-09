@@ -1,14 +1,20 @@
-local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
 
 -- Auto reload script after rejoin
-if queueteleport then
-	queueteleport([[
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/tawlavegas-jpg/wdwdwdwd/refs/heads/main/tththth"))()
-	]])
-	print("✅ Auto-reload enabled")
-else
-	warn("⚠️ queue_on_teleport not supported - script will not auto-reload")
+if not shared._QueuedAutoReload then
+    shared._QueuedAutoReload = true
+
+    local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
+
+    if queueteleport then
+        queueteleport([[
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/tawlavegas-jpg/wdwdwdwd/refs/heads/main/tththth"))()
+        ]])
+        print("✅ Auto-reload enabled")
+    else
+        warn("⚠️ queue_on_teleport not supported - script will not auto-reload")
+    end
 end
+
 
 
 -----------------------------------------------------
