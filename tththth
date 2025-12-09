@@ -87,7 +87,7 @@ autoRole = function()
         else
             print("  ⚙️ กำลัง Reroll 100 ครั้ง...")
             
-            for i = 1, 100 do
+            for i = 1, 50 do
                 if not _G.autoRole then break end
                 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer(unpack(bug))
                 wait(0.001)
