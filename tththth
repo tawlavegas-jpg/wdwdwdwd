@@ -1,135 +1,186 @@
 local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
 
--- ตั้งค่า Auto-Reload
+-- Auto reload script after rejoin
 if queueteleport then
 	queueteleport([[
         loadstring(game:HttpGet("https://raw.githubusercontent.com/tawlavegas-jpg/wdwdwdwd/refs/heads/main/tththth"))()
 	]])
 	print("✅ Auto-reload enabled")
 else
-	warn("⚠️ queueteleport not supported - script will not auto-reload after rejoin")
+	warn("⚠️ queue_on_teleport not supported - script will not auto-reload")
 end
 
+
+-----------------------------------------------------
+-- MAIN SERVICES
+-----------------------------------------------------
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local PlaceId = game.PlaceId
-local JobId = game.JobId
-
--- ฟังก์ชัน Rejoin
-local function rejoin()
-    print("🔄 กำลัง Rejoin...")
-    task.wait(1)
-    
-    if #Players:GetPlayers() <= 1 then
-        -- ถ้ามีผู้เล่น <= 1 คน (แค่ตัวเราเอง)
-        Players.LocalPlayer:Kick("\nRejoining...")
-        task.wait()
-        TeleportService:Teleport(PlaceId, Players.LocalPlayer)
-    else
-        -- ถ้ามีผู้เล่นมากกว่า 1 คน กลับเข้าเซิร์ฟเวอร์เดิม
-        TeleportService:TeleportToPlaceInstance(PlaceId, JobId, Players.LocalPlayer)
-    end
-end
-
--- ตั้งค่าหลัก
-local Role = "Kamado"
 local player = Players.LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
 
--- รอให้ LoadingScreen หาย
-print("⏳ รอ LoadingScreen หาย...")
-repeat task.wait(0.5) until not PlayerGui:FindFirstChild("LoadingScreen")
-print("✅ LoadingScreen หายแล้ว!")
+local PlaceId = game.PlaceId
+local JobId = game.JobId
 
+local targetRole = "Kamado"
+
+
+-----------------------------------------------------
+-- REJOIN FUNCTION
+-----------------------------------------------------
+local function rejoin()
+    print("🔄 Rejoining...")
+    task.wait(1)
+
+    if #Players:GetPlayers() <= 1 then
+        player:Kick("\nRejoining...")
+        task.wait()
+        TeleportService:Teleport(PlaceId, player)
+    else
+        TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
+    end
+end
+
+
+-----------------------------------------------------
+-- WAIT UNTIL UI READY
+-----------------------------------------------------
+print("⏳ Waiting for LoadingScreen to disappear...")
+repeat task.wait(0.5) until not PlayerGui:FindFirstChild("LoadingScreen")
+print("✅ LoadingScreen gone!")
+
+
+-- Load interface tree
 local Interface = PlayerGui:WaitForChild("Interface")
 local Customization = Interface:WaitForChild("Customization")
 local GuiFamily = Customization:WaitForChild("Family")
 local SpinsText = GuiFamily:WaitForChild("Spins")
 
-local asy = {"Character", "Customization", "Eyes", 5}
-local bug = {"Character", "Customization", "Eyes", workspace}
+-- แก้จุดพัง ⚠ — รอ Family UI อัปเดตจริงตอนเข้าเซิร์ฟรอบใหม่
+print("⏳ Waiting for Family UI to update...")
+repeat task.wait() until GuiFamily.Text ~= "" and not string.find(GuiFamily.Text, "Loading") 
+task.wait(1)
+print("✅ Family UI updated!")
 
-_G.autoRole = true
 
--- ฟังก์ชันดึงจำนวน Chances
+-----------------------------------------------------
+-- REMOTE PAYLOADS
+-----------------------------------------------------
+local rerollEyes = {"Character", "Customization", "Eyes", workspace}
+local saveEyes   = {"Character", "Customization", "Eyes", 5}
+
+
+-----------------------------------------------------
+-- FUNCTIONS
+-----------------------------------------------------
+
+-- อ่านจำนวน chances
 local function getChances()
     local text = SpinsText.Text
-    local number = tonumber(string.match(text, "%d+"))
-    return number or 0
+    local num = tonumber(string.match(text, "%d+"))
+    return num or 0
+end
+
+
+-- อ่าน LastName ใหม่จาก server (ไม่ใช่ GUI)
+local function getRealLastName()
+    -- เกมนี้ใช้ Remote Sync ดึงค่า LastName
+    local result = game:GetService("ReplicatedStorage")
+        :WaitForChild("Remotes")
+        :WaitForChild("Sync")
+        :InvokeServer("Character","Customization","LastName")
+
+    return tostring(result or "")
 end
 
 
 
--- ฟังก์ชันหลัก
-autoRole = function()
+-----------------------------------------------------
+-- MAIN AUTO ROLE FUNCTION
+-----------------------------------------------------
+_G.autoRole = true
+
+local function autoRole()
     local round = 0
     local foundRole = false
-    
+
     while _G.autoRole do
-        local currentChances = getChances()
-        
-        if currentChances <= 0 then
+        local chances = getChances()
+
+        if chances <= 0 then
             print("━━━━━━━━━━━━━━━━━━━━━━")
             print("⚠️ หมด Chances แล้ว!")
             print("━━━━━━━━━━━━━━━━━━━━━━")
             break
         end
-        
-        round = round + 1
+
+        round += 1
         print("━━━━━━━━━━━━━━━━━━━━━━")
-        print("🔄 รอบที่ " .. round .. " (เหลือ " .. currentChances .. " Chances)")
+        print("🔄 รอบที่ " .. round .. " (เหลือ " .. chances .. " Chances)")
         print("━━━━━━━━━━━━━━━━━━━━━━")
-        
+
         task.wait(0.1)
-        
-        -- เช็คว่าได้ Role หรือยัง
-        if string.find(GuiFamily.Text, Role) then
+
+        -------------------------------------------------
+        -- เช็คจาก Server จริง (ไม่ใช่ GUI)
+        -------------------------------------------------
+        local lastName = getRealLastName()
+
+        if lastName == targetRole then
             print("━━━━━━━━━━━━━━━━━━━━━━")
-            print("✅ สำเร็จ! ได้ " .. Role .. " แล้ว!")
+            print("✅ สำเร็จ! ได้ " .. targetRole .. " แล้ว!")
             print("━━━━━━━━━━━━━━━━━━━━━━")
-            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer(unpack(asy))
+
+            ReplicatedStorage.Remotes.Sync:InvokeServer(unpack(saveEyes))
             foundRole = true
             break
-        else
-            print("  ⚙️ กำลัง Reroll 50 ครั้ง...")
-            
-            -- Reroll 50 ครั้ง
-            for i = 1, 50 do
-                if not _G.autoRole then break end
-                
-                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer(unpack(bug))
-                
-                -- แสดงความคืบหน้าทุก 10 ครั้ง
-                if i % 10 == 0 then
-                    print("  ↳ " .. i .. "/50")
-                end
-                
-                task.wait(0.05)  -- เพิ่มจาก 0.001 เป็น 0.05 เพื่อความปลอดภัย
-            end
-            
-            task.wait(1)
-            print("  📋 ส่ง LastName request")
-            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer("Character","Customization","LastName")
-            
-            task.wait(0.5)  -- รอให้ UI อัพเดท
         end
+
+
+        -------------------------------------------------
+        -- ยังไม่ได้ → REROLL 50 ครั้ง
+        -------------------------------------------------
+        print("  ⚙️ กำลัง Reroll 50 ครั้ง...")
+
+        for i = 1, 50 do
+            if not _G.autoRole then break end
+
+            ReplicatedStorage.Remotes.Sync:InvokeServer(unpack(rerollEyes))
+            task.wait(0.05)
+
+            if i % 10 == 0 then
+                print("  ↳ " .. i .. "/50")
+            end
+        end
+
+        task.wait(1)
+
+        -- Refresh ค่า LastName
+        ReplicatedStorage.Remotes.Sync:InvokeServer("Character","Customization","LastName")
+        task.wait(0.5)
     end
-    
+
+
+    -------------------------------------------------
+    -- AFTER LOOP
+    -------------------------------------------------
     print("━━━━━━━━━━━━━━━━━━━━━━")
-    
-    -- Rejoin เฉพาะเมื่อหมด Chances และยังไม่ได้ Role
+
     if not foundRole then
-        print("😢 ไม่ได้ " .. Role .. " - กำลัง Rejoin...")
+        print("😢 ไม่ได้ " .. targetRole .. " - กำลัง Rejoin...")
         rejoin()
     else
-        print("🎉 เสร็จสมบูรณ์! ได้ " .. Role .. " แล้ว")
+        print("🎉 เสร็จสมบูรณ์! ได้ " .. targetRole .. " แล้ว")
         print("🛑 หยุดทำงาน")
     end
-    
+
     print("━━━━━━━━━━━━━━━━━━━━━━")
 end
 
--- เริ่มทำงาน
+
+-----------------------------------------------------
+-- START AUTO ROLE
+-----------------------------------------------------
 autoRole()
