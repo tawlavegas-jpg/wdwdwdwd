@@ -1,7 +1,5 @@
 
--- Auto reload script after rejoin
-if not shared._QueuedAutoReload then
-    shared._QueuedAutoReload = true
+
 
     local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
 
@@ -13,30 +11,54 @@ if not shared._QueuedAutoReload then
     else
         warn("⚠️ queue_on_teleport not supported - script will not auto-reload")
     end
-end
+local player = game:GetService("Players").LocalPlayer
+local gui = player:WaitForChild("PlayerGui")
+
+repeat
+    task.wait(0.001)
+until gui:FindFirstChild("LoadingScreen") == nil
+
+print("LoadingScreen หายแล้ว — ไปต่อได้!")
 
 
+local Roll = "Kamado"
+local clanme = nil
+local Randomchance = nil
+local rmRB = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync")
 
------------------------------------------------------
--- MAIN SERVICES
------------------------------------------------------
 local Players = game:GetService("Players")
+local player = Players.LocalPlayer 
 local TeleportService = game:GetService("TeleportService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local player = Players.LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui")
-
 local PlaceId = game.PlaceId
 local JobId = game.JobId
 
-local targetRole = "Kamado"
 
+
+
+
+
+local normalvalue = {"Character","Customization","Eyes",9}
+local errorvalue = { "Character","Customization","Eyes",workspace}
+
+
+CheckRoll = function()
+    for _,v in next, getgc(true) do
+        if type(v) == "table" and rawget(v, "LastName") then
+            clanme = v.LastName -- string
+            Randomchance = v.FamilyRolls
+            break
+        end
+    end
+end
+
+-- print(type(Randomchance))
+-- setclipboard(tostring(clanme))
 
 -----------------------------------------------------
 -- REJOIN FUNCTION
 -----------------------------------------------------
-local function rejoin()
+
+rejoin = function()
     print("🔄 Rejoining...")
     task.wait(1)
 
@@ -50,143 +72,43 @@ local function rejoin()
 end
 
 
------------------------------------------------------
--- WAIT UNTIL UI READY
------------------------------------------------------
-print("⏳ Waiting for LoadingScreen to disappear...")
-repeat task.wait(0.5) until not PlayerGui:FindFirstChild("LoadingScreen")
-print("✅ LoadingScreen gone!")
 
-
--- Load interface tree
-local Interface = PlayerGui:WaitForChild("Interface")
-local Customization = Interface:WaitForChild("Customization")
-local GuiFamily = Customization:WaitForChild("Family")
-local SpinsText = GuiFamily:WaitForChild("Spins")
-
--- แก้จุดพัง ⚠ — รอ Family UI อัปเดตจริงตอนเข้าเซิร์ฟรอบใหม่
-print("⏳ Waiting for Family UI to update...")
-repeat task.wait() until GuiFamily.Text ~= "" and not string.find(GuiFamily.Text, "Loading") 
-task.wait(1)
-print("✅ Family UI updated!")
-
-
------------------------------------------------------
--- REMOTE PAYLOADS
------------------------------------------------------
-local rerollEyes = {"Character", "Customization", "Eyes", workspace}
-local saveEyes   = {"Character", "Customization", "Eyes", 5}
-
-
------------------------------------------------------
--- FUNCTIONS
------------------------------------------------------
-
--- อ่านจำนวน chances
-local function getChances()
-    local text = SpinsText.Text
-    local num = tonumber(string.match(text, "%d+"))
-    return num or 0
-end
-
-
--- อ่าน LastName ใหม่จาก server (ไม่ใช่ GUI)
-local function getRealLastName()
-    -- เกมนี้ใช้ Remote Sync ดึงค่า LastName
-    local result = game:GetService("ReplicatedStorage")
-        :WaitForChild("Remotes")
-        :WaitForChild("Sync")
-        :InvokeServer("Character","Customization","LastName")
-
-    return tostring(result or "")
-end
-
-
-
------------------------------------------------------
--- MAIN AUTO ROLE FUNCTION
------------------------------------------------------
-_G.autoRole = true
-
-local function autoRole()
-    local round = 0
-    local foundRole = false
-
-    while _G.autoRole do
-        local chances = getChances()
-
-        if chances <= 0 then
-            print("━━━━━━━━━━━━━━━━━━━━━━")
-            print("⚠️ หมด Chances แล้ว!")
-            print("━━━━━━━━━━━━━━━━━━━━━━")
-            break
-        end
-
-        round += 1
-        print("━━━━━━━━━━━━━━━━━━━━━━")
-        print("🔄 รอบที่ " .. round .. " (เหลือ " .. chances .. " Chances)")
-        print("━━━━━━━━━━━━━━━━━━━━━━")
-
-        task.wait(0.1)
-
-        -------------------------------------------------
-        -- เช็คจาก Server จริง (ไม่ใช่ GUI)
-        -------------------------------------------------
-        local lastName = getRealLastName()
-
-        if lastName == targetRole then
-            print("━━━━━━━━━━━━━━━━━━━━━━")
-            print("✅ สำเร็จ! ได้ " .. targetRole .. " แล้ว!")
-            print("━━━━━━━━━━━━━━━━━━━━━━")
-
-            ReplicatedStorage.Remotes.Sync:InvokeServer(unpack(saveEyes))
-            foundRole = true
-            break
-        end
-
-
-        -------------------------------------------------
-        -- ยังไม่ได้ → REROLL 50 ครั้ง
-        -------------------------------------------------
-        print("  ⚙️ กำลัง Reroll 50 ครั้ง...")
-
-        for i = 1, 50 do
-            if not _G.autoRole then break end
-
-            ReplicatedStorage.Remotes.Sync:InvokeServer(unpack(rerollEyes))
-            task.wait(0.05)
-
-            if i % 10 == 0 then
-                print("  ↳ " .. i .. "/50")
-            end
-        end
-
-        task.wait(1)
-
-        -- Refresh ค่า LastName
-        ReplicatedStorage.Remotes.Sync:InvokeServer("Character","Customization","LastName")
-        task.wait(0.5)
+SpinRoll = function()
+    if clanme == Roll then
+        print("Name:" .. clanme)
+    elseif clanme ~= Roll and Randomchance > 0 then
+        print("สุ่มอีก")
     end
+end
 
-
-    -------------------------------------------------
-    -- AFTER LOOP
-    -------------------------------------------------
-    print("━━━━━━━━━━━━━━━━━━━━━━")
-
-    if not foundRole then
-        print("😢 ไม่ได้ " .. targetRole .. " - กำลัง Rejoin...")
+_G.SpinRoll = true
+while _G.SpinRoll do
+    -- SpinRoll
+    CheckRoll()
+    if clanme == Roll then
+        local f = 0
+        repeat
+            f = f + 1
+            rmRB:InvokeServer(unpack(normalvalue))
+            print("Normalizing... " .. f .. "/10")
+            task.wait(0.01)  -- ป้องกัน lag
+        until f >= 10
+        break
+    elseif clanme ~= Roll and Randomchance > 0 then
+        local i = 0
+        repeat
+            i = i + 1 
+            rmRB:InvokeServer(unpack(errorvalue))
+            task.wait(0.001)
+        until i >= 60
+        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer("Character","Customization","LastName")
+    elseif Randomchance <= 0 then
+            print("ออก")
         rejoin()
-    else
-        print("🎉 เสร็จสมบูรณ์! ได้ " .. targetRole .. " แล้ว")
-        print("🛑 หยุดทำงาน")
     end
-
-    print("━━━━━━━━━━━━━━━━━━━━━━")
+    task.wait(0.001)
 end
 
 
------------------------------------------------------
--- START AUTO ROLE
------------------------------------------------------
-autoRole()
+
+
