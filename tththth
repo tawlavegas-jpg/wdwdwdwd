@@ -1,62 +1,54 @@
 task.wait(30)
 
+local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
+if queueteleport then
+    queueteleport([[
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/tawlavegas-jpg/wdwdwdwd/refs/heads/main/tththth"))()
+    ]])
+    print("✅ Auto-reload enabled")
+else
+    warn("⚠️ queue_on_teleport not supported - script will not auto-reload")
+end
 
-    local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
-
-    if queueteleport then
-        queueteleport([[
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/tawlavegas-jpg/wdwdwdwd/refs/heads/main/tththth"))()
-        ]])
-        print("✅ Auto-reload enabled")
-    else
-        warn("⚠️ queue_on_teleport not supported - script will not auto-reload")
-    end
+---------------------------------------------------------------------
+-- WAIT LOADINGSCREEN REMOVE
+---------------------------------------------------------------------
 local player = game:GetService("Players").LocalPlayer
 local gui = player:WaitForChild("PlayerGui")
 
-repeat
-    task.wait(0.001)
+repeat task.wait(0.01)
 until gui:FindFirstChild("LoadingScreen") == nil
 
 print("LoadingScreen หายแล้ว — ไปต่อได้!")
 
-
+---------------------------------------------------------------------
+-- VARIABLES
+---------------------------------------------------------------------
 local Roll = "Kamado"
 local clanme = nil
 local Randomchance = nil
-local rmRB = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync")
 
+local rmRB = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync")
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer 
 local TeleportService = game:GetService("TeleportService")
 local PlaceId = game.PlaceId
 local JobId = game.JobId
 
-
-
-
-
-
 local normalvalue = {"Character","Customization","Eyes",9}
-local errorvalue = { "Character","Customization","Eyes",workspace}
+local errorvalue = {"Character","Customization","Eyes",workspace}
 
-
+---------------------------------------------------------------------
+-- FUNCTIONS
+---------------------------------------------------------------------
 CheckRoll = function()
     for _,v in next, getgc(true) do
         if type(v) == "table" and rawget(v, "LastName") then
-            clanme = v.LastName -- string
+            clanme = v.LastName
             Randomchance = v.FamilyRolls
-            break
+            return
         end
     end
 end
-
--- print(type(Randomchance))
--- setclipboard(tostring(clanme))
-
------------------------------------------------------
--- REJOIN FUNCTION
------------------------------------------------------
 
 rejoin = function()
     print("🔄 Rejoining...")
@@ -64,59 +56,60 @@ rejoin = function()
 
     if #Players:GetPlayers() <= 1 then
         player:Kick("\nRejoining...")
-        task.wait()
         TeleportService:Teleport(PlaceId, player)
     else
         TeleportService:TeleportToPlaceInstance(PlaceId, JobId, player)
     end
 end
 
-
-
-SpinRoll = function()
-    if clanme == Roll then
-        print("Name:" .. clanme)
-    elseif clanme ~= Roll and Randomchance > 0 then
-        print("สุ่มอีก")
+NormalizeEyes = function()
+    for i = 1, 10 do
+        rmRB:InvokeServer(unpack(normalvalue))
+        print("Normalizing... " .. i .. "/10")
+        task.wait(0.01)
     end
 end
 
+---------------------------------------------------------------------
+-- MAIN LOOP
+---------------------------------------------------------------------
 _G.SpinRoll = true
+
 while _G.SpinRoll do
-    -- SpinRoll
     CheckRoll()
+
+    ----------------------------------
+    -- CASE 1 : ได้ Roll ที่ต้องการ
+    ----------------------------------
     if clanme == Roll then
-        local f = 0
-        repeat
-            f = f + 1
-            rmRB:InvokeServer(unpack(normalvalue))
-            print("Normalizing... " .. f .. "/10")
-            task.wait(0.01)  -- ป้องกัน lag
-        until f >= 10
+        print("✔️ ได้ตระกูลแล้ว :", clanme)
+        NormalizeEyes()
         break
-    elseif clanme ~= Roll and Randomchance > 0 then
-        local i = 0
-        repeat
-            i = i + 1 
+    end
+
+    ----------------------------------
+    -- CASE 2 : ไม่ใช่ Roll และยังมี chance
+    ----------------------------------
+    if Randomchance > 0 and clanme ~= Roll then
+        print("สุ่มอีก (เหลือ chance:", Randomchance, ")")
+
+        for i = 1, 60 do
             rmRB:InvokeServer(unpack(errorvalue))
             task.wait(0.001)
-        until i >= 60
-        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer("Character","Customization","LastName")
-    elseif Randomchance <= 0  and clanme ~= Roll then
-            print("ออก")
-            rejoin()
-    elseif Randomchance <= 0  and clanme == Roll then
-         repeat
-            a = a + 1
-            rmRB:InvokeServer(unpack(normalvalue))
-            print("Normalizing... " .. a .. "/10")
-            task.wait(0.01)  -- ป้องกัน lag
-        until a >= 10
+        end
+
+        -- ขอ LastName ใหม่
+        rmRB:InvokeServer("Character","Customization","LastName")
+        task.wait(0.1)
+        continue
+    end
+
+    ----------------------------------
+    -- CASE 3 : หมด chance และไม่ได้ Roll
+    ----------------------------------
+    if Randomchance <= 0 and clanme ~= Roll then
+        print("❌ หมด chance — ออกไป rejoin")
+        rejoin()
         break
     end
-    task.wait(0.001)
 end
-
-
-
-
