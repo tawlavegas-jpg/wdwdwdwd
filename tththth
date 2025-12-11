@@ -102,9 +102,17 @@ while _G.SpinRoll do
             task.wait(0.001)
         until i >= 60
         game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Sync"):InvokeServer("Character","Customization","LastName")
-    elseif Randomchance <= 0 then
+    elseif Randomchance <= 0  and clanme ~= Roll then
             print("ออก")
-        rejoin()
+            rejoin()
+    elseif Randomchance <= 0  and clanme == Roll then
+         repeat
+            a = a + 1
+            rmRB:InvokeServer(unpack(normalvalue))
+            print("Normalizing... " .. a .. "/10")
+            task.wait(0.01)  -- ป้องกัน lag
+        until a >= 10
+        break
     end
     task.wait(0.001)
 end
