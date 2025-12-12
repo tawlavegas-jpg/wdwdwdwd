@@ -109,7 +109,7 @@ while _G.SpinRoll do
 
     -- ขอ LastName ใหม่
     rmRB:InvokeServer("Character","Customization","LastName")
-    task.wait(0.1)
+    task.wait(2)
 
     -- อ่านค่าช่อง Chance ใหม่หลังสปิน
     local newChance = Randomchance
