@@ -99,9 +99,10 @@ while _G.SpinRoll do
   if Randomchance > 0 and clanme ~= Roll then
     print("สุ่มอีก (เหลือ chance:", Randomchance, ")")
 
-    -- เก็บค่าช่อง Chance ก่อนสปิน
-    local oldChance = Randomchance
+    -- เก็บค่า chance ก่อนสุ่ม
+    local beforeChance = Randomchance
 
+    -- spam invoke ตามของนาย
     for i = 1, 60 do
         rmRB:InvokeServer(unpack(errorvalue))
         task.wait(0.001)
@@ -109,22 +110,28 @@ while _G.SpinRoll do
 
     -- ขอ LastName ใหม่
     rmRB:InvokeServer("Character","Customization","LastName")
-    task.wait(2)
-
-    -- อ่านค่าช่อง Chance ใหม่หลังสปิน
-    local newChance = Randomchance
+    task.wait(0.15)
 
     ------------------------------------------------
-    -- ถ้า Chance ไม่ลด = เกมบัค = Rejoin()
+    -- อ่าน chance ใหม่หลังสุ่ม
     ------------------------------------------------
-    if newChance == oldChance then
-        warn("Chance ไม่ลดลง → เกมบัค → Rejoin()")
-            rejoin()
-        break
+    local afterChance = Randomchance
+
+    -- debug เพื่อเห็นค่าจริง
+    print("ก่อนสุ่ม:", beforeChance, "หลังสุ่ม:", afterChance)
+
+    ------------------------------------------------
+    -- ถ้า chance ไม่ลดจริง = เกมบัค → rejoin
+    ------------------------------------------------
+    if afterChance == beforeChance then
+        warn("❌ Chance ไม่ลดลงเลย → REJOIN()")
+        rejoin()
+        return
     end
 
     continue
 end
+
 
     ----------------------------------
     -- CASE 3 : หมด chance และไม่ได้ Roll
