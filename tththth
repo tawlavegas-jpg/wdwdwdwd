@@ -62,8 +62,43 @@ rejoin = function()
     end
 end
 
+
+
+
+
+
+---------------------------------------------------------------------
+-- ANTI FREEZE FUNCTION : ถ้าเกมค้างหรือ remote ไม่ตอบ 30 วิ → rejoin
+---------------------------------------------------------------------
+
+local lastAliveTime = tick()
+
+-- ฟังก์ชันเรียกเมื่อมีการทำงานปกติ
+function heartbeat()
+    lastAliveTime = tick()
+end
+
+-- ลูปเช็คว่าค้างไปเกิน 30 วิหรือยัง
+task.spawn(function()
+    while task.wait(1) do
+        if tick() - lastAliveTime >= 30 then
+            print("⛔ ระบบตรวจพบว่าเกมค้าง > 30 วิ — Rejoin ทันที")
+            rejoin()
+            break
+        end
+    end
+end)
+
+
+
+
+
+
+
+
 NormalizeEyes = function()
     for i = 1, 10 do
+        heartbeat()
         rmRB:InvokeServer(unpack(normalvalue))
         print("Normalizing... " .. i .. "/10")
         task.wait(0.01)
@@ -76,6 +111,7 @@ end
 _G.SpinRoll = true
 
 while _G.SpinRoll do
+    heartbeat()
     CheckRoll()
 
     ----------------------------------
@@ -94,11 +130,13 @@ while _G.SpinRoll do
         print("สุ่มอีก (เหลือ chance:", Randomchance, ")")
 
         for i = 1, 60 do
+            heartbeat()
             rmRB:InvokeServer(unpack(errorvalue))
             task.wait(0.001)
         end
 
         -- ขอ LastName ใหม่
+        heartbeat()
         rmRB:InvokeServer("Character","Customization","LastName")
         task.wait(0.1)
         continue
