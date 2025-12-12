@@ -77,7 +77,7 @@ local lastAliveTime = tick()
 function heartbeat()
     lastAliveTime = tick()
 end
-
+-- ใส่ heartbeat ทุก 0.1-0.2 วิ โดยไม่สนลูป
 -- ลูปเช็คว่าค้างไปเกิน 30 วิหรือยัง
 task.spawn(function()
     while task.wait(1) do
@@ -126,21 +126,19 @@ while _G.SpinRoll do
     ----------------------------------
     -- CASE 2 : ไม่ใช่ Roll และยังมี chance
     ----------------------------------
-    if Randomchance > 0 and clanme ~= Roll then
-        print("สุ่มอีก (เหลือ chance:", Randomchance, ")")
-
-        for i = 1, 60 do
-            heartbeat()
-            rmRB:InvokeServer(unpack(errorvalue))
-            task.wait(0.001)
-        end
-
-        -- ขอ LastName ใหม่
-        heartbeat()
-        rmRB:InvokeServer("Character","Customization","LastName")
-        task.wait(0.1)
-        continue
+   -- แก้ตรงนี้ใหม่ทั้งหมด
+if Randomchance > 0 and clanme ~= Roll then
+    print("สุ่มอีก (เหลือ chance:", Randomchance, ")")
+    for i = 1, 60 do
+        heartbeat()  -- เรียกบ่อยสุด
+        rmRB:InvokeServer(unpack(errorvalue))
+        task.wait(0.03)  -- เพิ่ม delay นิดนึง อย่าเร็วเกิน (0.03-0.05 ดีสุด)
     end
+    heartbeat()
+    rmRB:InvokeServer("Character","Customization","LastName")
+    task.wait(0.2)  -- รอสักนิดให้ server ตอบ
+    continue
+end
 
     ----------------------------------
     -- CASE 3 : หมด chance และไม่ได้ Roll
