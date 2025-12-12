@@ -110,7 +110,7 @@ while _G.SpinRoll do
 
     -- ขอ LastName ใหม่
     rmRB:InvokeServer("Character","Customization","LastName")
-    task.wait(0.15)
+    task.wait(2)
 
     ------------------------------------------------
     -- อ่าน chance ใหม่หลังสุ่ม
