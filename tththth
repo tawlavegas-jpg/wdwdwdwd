@@ -1,4 +1,4 @@
-task.wait(10)
+task.wait(5)
 
 local queueteleport = queue_on_teleport or (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport)
 if queueteleport then
@@ -37,6 +37,12 @@ local JobId = game.JobId
 local normalvalue = {"Character","Customization","Eyes",9}
 local errorvalue = {"Character","Customization","Eyes",workspace}
 
+
+
+local sameCount = 0
+local maxSame = 3
+
+
 ---------------------------------------------------------------------
 -- FUNCTIONS
 ---------------------------------------------------------------------
@@ -62,43 +68,8 @@ rejoin = function()
     end
 end
 
-
-
-
-
-
----------------------------------------------------------------------
--- ANTI FREEZE FUNCTION : ถ้าเกมค้างหรือ remote ไม่ตอบ 30 วิ → rejoin
----------------------------------------------------------------------
-
-local lastAliveTime = tick()
-
--- ฟังก์ชันเรียกเมื่อมีการทำงานปกติ
-function heartbeat()
-    lastAliveTime = tick()
-end
--- ใส่ heartbeat ทุก 0.1-0.2 วิ โดยไม่สนลูป
--- ลูปเช็คว่าค้างไปเกิน 30 วิหรือยัง
-task.spawn(function()
-    while task.wait(1) do
-        if tick() - lastAliveTime >= 30 then
-            print("⛔ ระบบตรวจพบว่าเกมค้าง > 30 วิ — Rejoin ทันที")
-            rejoin()
-            break
-        end
-    end
-end)
-
-
-
-
-
-
-
-
 NormalizeEyes = function()
     for i = 1, 10 do
-        heartbeat()
         rmRB:InvokeServer(unpack(normalvalue))
         print("Normalizing... " .. i .. "/10")
         task.wait(0.01)
@@ -111,7 +82,6 @@ end
 _G.SpinRoll = true
 
 while _G.SpinRoll do
-    heartbeat()
     CheckRoll()
 
     ----------------------------------
@@ -122,23 +92,48 @@ while _G.SpinRoll do
         NormalizeEyes()
         break
     end
+    
+    
 
     ----------------------------------
     -- CASE 2 : ไม่ใช่ Roll และยังมี chance
     ----------------------------------
-   -- แก้ตรงนี้ใหม่ทั้งหมด
-if Randomchance > 0 and clanme ~= Roll then
-    print("สุ่มอีก (เหลือ chance:", Randomchance, ")")
-    for i = 1, 60 do
-        heartbeat()  -- เรียกบ่อยสุด
-        rmRB:InvokeServer(unpack(errorvalue))
-        task.wait(0.03)  -- เพิ่ม delay นิดนึง อย่าเร็วเกิน (0.03-0.05 ดีสุด)
+    if Randomchance > 0 and clanme ~= Roll then
+        print("สุ่มอีก (เหลือ chance:", Randomchance, ")")
+
+        for i = 1, 60 do
+            rmRB:InvokeServer(unpack(errorvalue))
+            task.wait(0.001)
+        end
+
+        -- สุ่มชื่อใหม่
+        rmRB:InvokeServer("Character","Customization","LastName")
+        task.wait(0.1)
+
+        -- อ่านชื่อใหม่หลังสุ่ม
+        local newName = Roll  -- หรือที่นายเก็บค่าชื่อหลัง spin จริง ๆ
+
+        ---------------------------------------------------
+        -- เช็คชื่อเดิม-ชื่อใหม่
+        ---------------------------------------------------
+        if newName == clanme then
+            sameCount += 1
+            print("ได้ชื่อเดิมซ้ำ! ("..sameCount.."/"..maxSame..")")
+
+            if sameCount >= maxSame then
+                warn("สุ่มชื่อเดิมครบ 3 ครั้ง → Rejoin()")
+                rejoin()
+                break -- กันไม่ให้โค้ดวนต่อ
+            end
+        else
+            -- ได้ชื่อใหม่ ก็ reset counter
+            sameCount = 0
+        end
+
+        -- อัปเดตชื่อเดิมให้เป็นชื่อที่สปินล่าสุด
+        clanme = newName
+        continue
     end
-    heartbeat()
-    rmRB:InvokeServer("Character","Customization","LastName")
-    task.wait(0.2)  -- รอสักนิดให้ server ตอบ
-    continue
-end
 
     ----------------------------------
     -- CASE 3 : หมด chance และไม่ได้ Roll
